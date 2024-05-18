@@ -1,7 +1,10 @@
 use iced::widget::{column, container, slider, text};
 use iced::{Element, Length, Sandbox, Settings, window};
+use brightness::Brightness;
+use futures::TryStreamExt;
 
-pub fn main() -> iced::Result {
+#[tokio::main]
+pub async fn main() -> iced::Result {
     let settings: Settings<()> = iced::settings::Settings {
         window: window::Settings {
             size: iced::Size::new(300.0, 100.0),
@@ -12,6 +15,13 @@ pub fn main() -> iced::Result {
         ..Default::default()
     };
     Slider::run(settings)
+}
+
+async fn set_brightness(x: u32) -> Result<(), brightness::Error> {
+    brightness::brightness_devices().try_for_each(|mut dev| async move {
+        dev.set(x).await?;
+        Ok(())
+    }).await
 }
 
 #[derive(Debug, Clone)]
@@ -50,12 +60,17 @@ impl Sandbox for Slider {
         match message {
             Message::SliderChanged(value) => {
                 self.value = value;
+                tokio::spawn(async move {
+                    if let Err(e) = set_brightness(value as u32).await {
+                        eprintln!("Error: {}", e);
+                    }
+                });
             }
         }
     }
 
     fn view(&self) -> Element<Message> {
-        let h_slider = container(
+        let horizontal_slider = container(
             slider(0..=100, self.value, Message::SliderChanged)
                 .default(self.default)
                 .step(self.step)
@@ -63,14 +78,14 @@ impl Sandbox for Slider {
         )
         .width(250);
 
-        let text = text( self.value);
+        let text = text(self.value);
 
         container(
             column![
-                container(h_slider).width(Length::Fill).center_x(),
+                container(horizontal_slider).width(Length::Fill).center_x(),
                 container(text).width(Length::Fill).center_x(),
             ]
-            .spacing(25),
+            .spacing(15),
         )
         .height(Length::Fill)
         .width(Length::Fill)
