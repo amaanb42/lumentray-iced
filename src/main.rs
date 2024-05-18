@@ -4,7 +4,7 @@ use brightness::Brightness;
 use futures::TryStreamExt;
 
 #[tokio::main]
-pub async fn main() -> iced::Result {
+async fn main() -> iced::Result {
     let settings: Settings<()> = iced::settings::Settings {
         window: window::Settings {
             size: iced::Size::new(300.0, 100.0),
