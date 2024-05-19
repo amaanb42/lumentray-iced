@@ -13,7 +13,10 @@ async fn main() -> iced::Result {
         .arg("echo 'ddcci 0x37' | sudo tee /sys/bus/i2c/devices/i2c-1/new_device")
         .output()
         .expect("Failed to execute process");
+
+    // sleep call to give time for above command to create required directory
     thread::sleep(time::Duration::from_secs_f32(3.0));
+    
     let settings: Settings<()> = iced::settings::Settings {
         window: window::Settings {
             size: iced::Size::new(300.0, 100.0),
