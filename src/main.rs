@@ -1,7 +1,9 @@
+use std::fs;
+use std::error::Error;
 use iced::widget::{column, container, slider, text};
 use iced::{Element, Length, Sandbox, Settings, window};
 use brightness::Brightness;
-use futures::TryStreamExt;
+use futures::{TryFutureExt, TryStreamExt};
 
 #[tokio::main]
 async fn main() -> iced::Result {
@@ -24,6 +26,28 @@ async fn set_brightness(x: u32) -> Result<(), brightness::Error> {
     }).await
 }
 
+async fn get_brightness_chimken() -> Result<u8, brightness::Error> {
+    let mut value = None;
+    brightness::brightness_devices().try_for_each(|dev| async move {
+        value = Some(dev.get().await? as u8);
+        Ok(())
+    }).await?;
+    Ok(value.unwrap())
+}
+
+fn get_brightness() -> Result<u8, Box<dyn Error>> {
+    let backlight_dir = "/sys/class/backlight/ddcci1";
+
+    // Read the contents of the "brightness" file
+    let brightness_path = format!("{}/actual_brightness", backlight_dir);
+    let brightness_str = fs::read_to_string(&brightness_path)?;
+
+    // Parse the string to u8
+    let brightness = brightness_str.trim().parse::<u8>()?;
+
+    Ok(brightness)
+}
+
 #[derive(Debug, Clone)]
 pub enum Message {
     SliderChanged(u8),
@@ -38,10 +62,11 @@ pub struct Slider {
 
 impl Sandbox for Slider {
     type Message = Message;
+
     fn new() -> Slider {
         Slider {
-            value: 50,
-            default: 50,
+            value: get_brightness_chimken().unwrap(),
+            default: get_brightness_chimken().await.unwrap_or_else(|_|0),
             step: 1,
             shift_step: 1,
         }
