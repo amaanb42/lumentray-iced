@@ -1,12 +1,19 @@
-use std::fs;
-use std::error::Error;
-use iced::widget::{column, container, slider, text};
-use iced::{Element, Length, Sandbox, Settings, window};
 use brightness::Brightness;
 use futures::TryStreamExt;
+use iced::widget::{column, container, slider, text};
+use iced::{window, Element, Length, Sandbox, Settings};
+use std::error::Error;
+use std::{fs, thread, time};
+use std::process::Command;
 
 #[tokio::main]
 async fn main() -> iced::Result {
+    Command::new("sh")
+        .arg("-c")
+        .arg("echo 'ddcci 0x37' | sudo tee /sys/bus/i2c/devices/i2c-1/new_device")
+        .output()
+        .expect("Failed to execute process");
+    thread::sleep(time::Duration::from_secs_f32(3.0));
     let settings: Settings<()> = iced::settings::Settings {
         window: window::Settings {
             size: iced::Size::new(300.0, 100.0),
@@ -20,10 +27,12 @@ async fn main() -> iced::Result {
 }
 
 async fn set_brightness(x: u32) -> Result<(), brightness::Error> {
-    brightness::brightness_devices().try_for_each(|mut dev| async move {
-        dev.set(x).await?;
-        Ok(())
-    }).await
+    brightness::brightness_devices()
+        .try_for_each(|mut dev| async move {
+            dev.set(x).await?;
+            Ok(())
+        })
+        .await
 }
 
 fn get_brightness() -> Result<u8, Box<dyn Error>> {
