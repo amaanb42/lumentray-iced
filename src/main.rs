@@ -3,7 +3,7 @@ use std::error::Error;
 use iced::widget::{column, container, slider, text};
 use iced::{Element, Length, Sandbox, Settings, window};
 use brightness::Brightness;
-use futures::{TryFutureExt, TryStreamExt};
+use futures::TryStreamExt;
 
 #[tokio::main]
 async fn main() -> iced::Result {
@@ -24,15 +24,6 @@ async fn set_brightness(x: u32) -> Result<(), brightness::Error> {
         dev.set(x).await?;
         Ok(())
     }).await
-}
-
-async fn get_brightness_chimken() -> Result<u8, brightness::Error> {
-    let mut value = None;
-    brightness::brightness_devices().try_for_each(|dev| async move {
-        value = Some(dev.get().await? as u8);
-        Ok(())
-    }).await?;
-    Ok(value.unwrap())
 }
 
 fn get_brightness() -> Result<u8, Box<dyn Error>> {
@@ -65,8 +56,8 @@ impl Sandbox for Slider {
 
     fn new() -> Slider {
         Slider {
-            value: get_brightness_chimken().unwrap(),
-            default: get_brightness_chimken().await.unwrap_or_else(|_|0),
+            value: get_brightness().unwrap(),
+            default: get_brightness().unwrap(),
             step: 1,
             shift_step: 1,
         }
