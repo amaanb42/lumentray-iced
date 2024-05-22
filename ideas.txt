@@ -1,0 +1,1 @@
+- Ctrl Q shortcut to kill app
