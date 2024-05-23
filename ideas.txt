@@ -1,1 +1,2 @@
 - Ctrl Q shortcut to kill app
+- keybinds to control brightness
